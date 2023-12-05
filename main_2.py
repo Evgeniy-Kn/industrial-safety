@@ -11,11 +11,11 @@ def are_rectangles_intersecting(rect1, rect2, rect3, rectx):
     xx, yx, wx, hx = rectx
 
     if x1 < xx + wx and x1 + w1 > xx and y1 < yx + hx and y1 + h1 > yx:
-        return 1
+        return 3
     elif x2 < xx + wx and x2 + w2 > xx and y2 < yx + hx and y2 + h2 > yx:
         return 2
     elif x3 < xx + wx and x3 + w3 > xx and y3 < yx + hx and y3 + h3 > yx:
-        return 3
+        return 1
     else:
         return False
 
@@ -27,10 +27,11 @@ rectangle_3 = (200, 100, 300, 300)  # основная рамка (x, y, width, 
 rectangle_x = []  # для обнаруженных рамок при сравнении
 
 model = YOLO('C:/Users/knyaz/PycharmProjects/yolo_cuda/runs/detect/test_hand_v4_2_nano/weights/best.pt')  # веса
+# model = YOLO('yolov8l.pt')
 url_ip = 'http://192.168.0.102:8080/video'  # адрес камеры
 
-cap = cv2.VideoCapture('IMG_4298.MOV')  # ролик
-# cap = cv2.VideoCapture(url_ip)  # ip камера
+# cap = cv2.VideoCapture('IMG_4298.MOV')  # ролик
+cap = cv2.VideoCapture(url_ip)  # ip камера
 # cap = cv2.VideoCapture(0)  # веб-камера
 
 # # для изменения разрешения
@@ -39,15 +40,15 @@ cap = cv2.VideoCapture('IMG_4298.MOV')  # ролик
 
 while True:
     _, frame = cap.read()
+    count_box = [0]  # переменная для записи данных с функции по пересечению
 
     # изменение разрешения
     # frame = cv2.resize(frame, (new_width, new_height))
 
     results = model.predict(frame)
-    for r in results:
-        print(results)
+    for result in results:
         annotator = Annotator(frame)
-        boxes = r.boxes
+        boxes = result.boxes
         for box in boxes:
 
             b = box.xyxy[0]  # get box coordinates in (top, left, bottom, right) format
@@ -57,16 +58,20 @@ while True:
             annotator.box_label(b, model.names[int(c)])
 
             intersection_result = are_rectangles_intersecting(rectangle_1, rectangle_2, rectangle_3, rectangle_x)
-            if intersection_result == 1:
-                cv2.putText(frame, 'Опасность!', (50, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
-            elif intersection_result == 2:
-                cv2.putText(frame, 'Опасность!', (150, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
-            elif intersection_result == 3:
-                cv2.putText(frame, 'Опасность!', (250, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
-            else:
-                cv2.putText(frame, 'Опасности нет', (50, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 55, 0), 2, cv2.LINE_AA)
-
+            count_box.append(intersection_result)
+            print(count_box)
             rectangle_x = []
+
+    if max(count_box) == 3:
+        cv2.putText(frame, 'Опасность!', (50, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
+    elif max(count_box) == 2:
+        cv2.putText(frame, 'Опасность!', (150, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+    elif max(count_box) == 1:
+        cv2.putText(frame, 'Опасность!', (250, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
+    else:
+        cv2.putText(frame, 'Опасности нет', (50, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 55, 0), 2, cv2.LINE_AA)
+
+
 
     frame = annotator.result()
     frame = cv2.rectangle(frame, (rectangle_1[0], rectangle_1[1]),
