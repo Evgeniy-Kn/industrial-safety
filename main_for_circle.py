@@ -66,15 +66,16 @@ while True:
             annotator.box_label(b, model.names[int(c)])
 
             intersection_result = check_intersection(circle_centers, circle_radius, rectangle_x)
-            count_box.append(intersection_result)
+            print(intersection_result)
+            count_box.append(4 - intersection_result)
             print(count_box)
             rectangle_x = []
 
-    if max(count_box) == 1:
+    if max(count_box) == 3:
         cv2.putText(frame, 'Опасность!', (50, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 0, 255), 2, cv2.LINE_AA)
     elif max(count_box) == 2:
         cv2.putText(frame, 'Опасность!', (50, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
-    elif max(count_box) == 3:
+    elif max(count_box) == 1:
         cv2.putText(frame, 'Опасность!', (50, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 0, 0), 2, cv2.LINE_AA)
     else:
         cv2.putText(frame, 'Опасности нет', (50, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (255, 55, 0), 2, cv2.LINE_AA)
